@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Punk Punk Steps</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
+<script>
+  // The Google library may finish loading before the page script parses,
+  // so record that it's ready and let whichever finishes last kick things off.
+  window.__gisReady = false;
+  function gisLoaded() {
+    window.__gisReady = true;
+    if (window.__initGis) window.__initGis();
+  }
+</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    padding: 30px 20px;
+    background: #0a0a0a;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  .bg { position: fixed; inset: 0; background: url('https://images.unsplash.com/photo-1589952283406-b53a7d1347e8?q=80&w=2148&auto=format&fit=crop') center center / cover no-repeat; z-index: 0; }
+  .bg::after { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1; }
+  .stripes { display: none; }
+  .track { display: none; }
+  .track2 { display: none; }
+  .center-circle { display: none; }
+
+  /* Birthday confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 8px; height: 8px;
+    top: -10px;
+    z-index: 200;
+    animation: confettiFall linear forwards;
+    border-radius: 2px;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  .card {
+    position: relative;
+    z-index: 2;
+    background: rgba(10, 20, 10, 0.85);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,60,60,0.25);
+    border-radius: 8px;
+    padding: 36px 44px 32px;
+    width: 100%;
+    max-width: 680px;
+    box-shadow: 0 8px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255,40,40,0.07);
+  }
+
+  /* HEADER */
+  .header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+  .title {
+    font-family: 'Bebas Neue', sans-serif;
+    color: #ff3333;
+    font-size: 2.2rem;
+    letter-spacing: 0.06em;
+  }
+  .badge {
+    background: rgba(255,50,50,0.15);
+    border: 1px solid rgba(255,50,50,0.3);
+    color: #ff6666;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  .sync-badge { margin-left: auto; }
+  .sync-badge.ok  { background: rgba(100,200,100,0.10); border-color: rgba(100,200,100,0.28); color: #6aaa6a; }
+  .sync-badge.busy{ background: rgba(255,200,0,0.10);  border-color: rgba(255,200,0,0.28);  color: #ccaa33; }
+  .sync-badge.err { background: rgba(255,50,50,0.15);  border-color: rgba(255,50,50,0.35);  color: #ff6666; }
+  .sync-badge.off { background: rgba(255,255,255,0.04);border-color: rgba(255,255,255,0.12);color: #4a7a4a; }
+
+  /* SIGN-IN OVERLAY — same card, same palette */
+  .auth-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px 20px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(3px);
+  }
+  .auth-card {
+    max-width: 400px;
+    text-align: center;
+    padding: 34px 32px 30px;
+  }
+  .auth-card .title { font-size: 1.9rem; }
+  .auth-msg {
+    color: #6aaa6a;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    line-height: 1.7;
+    margin: 14px 0 20px;
+  }
+  .auth-card .save-btn { width: 100%; flex: none; }
+  .auth-note {
+    color: #ff6666;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    line-height: 1.6;
+    margin-top: 14px;
+    min-height: 1em;
+  }
+
+  /* VIEW TOGGLE */
+  .view-toggle {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+    margin-bottom: 0;
+  }
+  .toggle-btn {
+    background: rgba(255,50,50,0.06);
+    border: 1px solid rgba(255,50,50,0.18);
+    color: #4a7a4a;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .toggle-btn.active {
+    background: rgba(255,50,50,0.18);
+    border-color: rgba(255,50,50,0.45);
+    color: #ff6666;
+  }
+  .toggle-btn:hover:not(.active) { background: rgba(255,50,50,0.12); color: #6aaa6a; }
+
+  /* NAV */
+  .period-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    margin-top: 14px;
+  }
+  .nav-btn {
+    background: rgba(255,50,50,0.1);
+    border: 1px solid rgba(255,50,50,0.25);
+    color: #ff5555;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    letter-spacing: 0.08em;
+  }
+  .nav-btn:hover { background: rgba(255,50,50,0.22); color: #ff8080; }
+  .nav-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+  .period-label {
+    color: #6aaa6a;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    flex: 1;
+  }
+  .period-label span {
+    display: block;
+    color: #ff5555;
+    font-size: 0.85rem;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+  .birthday-label {
+    color: #ffcc00 !important;
+    text-shadow: 0 0 12px rgba(255,200,0,0.6);
+    animation: bdayPulse 1s infinite;
+  }
+  @keyframes bdayPulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* CHART */
+  svg { width: 100%; overflow: visible; }
+  .grid-line { stroke: rgba(255,255,255,0.06); stroke-width: 1; stroke-dasharray: 4 4; }
+  .axis-label { fill: #3a5a3a; font-family: 'DM Mono', monospace; font-size: 10px; }
+  .x-label { fill: #6aaa6a; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.06em; }
+  .area { fill: url(#areaGrad); opacity: 0.5; }
+  .line-path {
+    fill: none; stroke: #ff3333; stroke-width: 3;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  @keyframes drawLine { to { stroke-dashoffset: 0; } }
+  @keyframes popIn {
+    0%   { transform: scale(0); opacity: 0; }
+    70%  { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes fadeIn { to { opacity: 1; } }
+  .dot { fill: #ff3333; stroke: #0a140a; stroke-width: 2.5; }
+  .step-label { fill: #ff6666; font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; }
+  .no-data-label { fill: #3a6b3a; font-family: 'DM Mono', monospace; font-size: 11px; }
+
+  /* TOTALS */
+  .totals-row {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,50,50,0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .total-block { text-align: center; flex: 1; }
+  .total-label { color: #3a6b3a; font-size: 0.58rem; letter-spacing: 0.15em; text-transform: uppercase; display: block; margin-bottom: 3px; }
+  .total-val { color: #ff4444; font-size: 1rem; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.1em; }
+  .total-divider { width: 1px; height: 32px; background: rgba(255,50,50,0.15); }
+
+  /* INPUT PANEL */
+  .input-panel {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,50,50,0.1);
+  }
+  .input-panel-title {
+    color: #4a8a4a;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .day-inputs {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 7px;
+  }
+  .month-inputs {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .month-inputs::-webkit-scrollbar { width: 4px; }
+  .month-inputs::-webkit-scrollbar-track { background: transparent; }
+  .month-inputs::-webkit-scrollbar-thumb { background: rgba(255,50,50,0.2); border-radius: 2px; }
+
+  .day-input-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .day-input-label { color: #5a9a5a; font-size: 0.58rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .day-input-date { color: #3a6a3a; font-size: 0.5rem; }
+  .step-input {
+    width: 100%;
+    background: rgba(255,50,50,0.06);
+    border: 1px solid rgba(255,50,50,0.18);
+    border-radius: 3px;
+    color: #ff8888;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 5px 3px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .step-input:focus { border-color: rgba(255,50,50,0.5); background: rgba(255,50,50,0.1); }
+  .step-input::placeholder { color: #2a4a2a; font-size: 0.55rem; }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+  .save-btn {
+    flex: 2;
+    background: rgba(255,50,50,0.12);
+    border: 1px solid rgba(255,50,50,0.3);
+    color: #ff5555;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    padding: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .save-btn:hover { background: rgba(255,50,50,0.22); }
+
+  .play-btn {
+    flex: 1;
+    background: rgba(100,200,100,0.08);
+    border: 1px solid rgba(100,200,100,0.25);
+    color: #6aaa6a;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    padding: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .play-btn:hover { background: rgba(100,200,100,0.16); color: #8acc8a; }
+  .play-btn:active { transform: scale(0.97); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: #1a0e0e;
+    border: 1px solid rgba(255,50,50,0.4);
+    color: #ff6666;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    padding: 10px 22px;
+    border-radius: 3px;
+    z-index: 100;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .current-dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: #ff3333; border-radius: 50%;
+    margin-left: 6px; vertical-align: middle;
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* month-view week dividers in input grid */
+  .week-divider {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: rgba(255,50,50,0.1);
+    margin: 3px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="stripes"></div>
+<div class="track"></div>
+<div class="track2"></div>
+<div class="center-circle"></div>
+
+<div class="card">
+  <div class="header">
+    <div class="title">Punk Punk Steps</div>
+    <div class="badge" id="periodBadge">Week 1</div>
+    <div class="badge sync-badge off" id="syncBadge">Local only</div>
+  </div>
+
+  <div class="view-toggle">
+    <button class="toggle-btn active" id="btnWeekly" onclick="setView('weekly')">Weekly</button>
+    <button class="toggle-btn" id="btnMonthly" onclick="setView('monthly')">Monthly</button>
+  </div>
+
+  <div class="period-nav">
+    <button class="nav-btn" id="prevBtn" onclick="changePeriod(-1)">◀ PREV</button>
+    <div class="period-label">
+      <div id="periodSublabel">Week of</div>
+      <span id="periodRangeLabel">—</span>
+    </div>
+    <button class="nav-btn" id="nextBtn" onclick="changePeriod(1)">NEXT ▶</button>
+  </div>
+
+  <svg id="chart" viewBox="0 0 560 200"></svg>
+
+  <div class="totals-row">
+    <div class="total-block">
+      <span class="total-label" id="periodTotalLabel">Week Total</span>
+      <span class="total-val" id="periodTotalVal">— Steps</span>
+    </div>
+    <div class="total-divider"></div>
+    <div class="total-block">
+      <span class="total-label">All-Time Total</span>
+      <span class="total-val" id="allTimeVal">— Steps</span>
+    </div>
+  </div>
+
+  <div class="input-panel">
+    <div class="input-panel-title" id="inputPanelTitle">Log Steps — current week</div>
+    <div id="dayInputs" class="day-inputs"></div>
+    <div class="btn-row">
+      <button class="save-btn" onclick="saveWeek()">SAVE</button>
+      <button class="play-btn" onclick="replayAnimation()" title="Replay animation">
+        ▶ REPLAY
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="auth-overlay" id="authOverlay" style="display:none">
+  <div class="card auth-card">
+    <div class="title">Punk Punk Steps</div>
+    <div class="auth-msg">Sign in to load your step log from Google Sheets.</div>
+    <button class="save-btn" onclick="signIn()">SIGN IN WITH GOOGLE</button>
+    <div class="auth-note" id="authNote"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Saved!</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────────
+const DAY_SHORT = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function toKey(date) {
+  return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+}
+function formatShort(date) { return (date.getMonth()+1)+'/'+date.getDate(); }
+function addDays(date, n) { const d=new Date(date); d.setDate(d.getDate()+n); return d; }
+
+// Week starts Saturday
+function getWeekStart(date) {
+  const d = new Date(date);
+  const dow = d.getDay(); // 0=Sun,6=Sat
+  d.setDate(d.getDate() - (dow === 6 ? 0 : dow + 1));
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+// Month start: first Saturday on or before the 1st of that month
+function getMonthStart(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), 1);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  GOOGLE SHEET CONNECTION — fill in these three lines. Setup guide in SETUP.md
+// ══════════════════════════════════════════════════════════════════════════════
+const CLIENT_ID      = '';          // ends in .apps.googleusercontent.com
+const SPREADSHEET_ID = '';          // the long id in your sheet's URL
+const SHEET_TAB      = 'Sheet1';    // the tab name at the bottom of the sheet
+
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+const API = 'https://sheets.googleapis.com/v4/spreadsheets/';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+const seedWeekStart = getWeekStart(TODAY);
+const seedKey = toKey(seedWeekStart);
+
+// Local mirror of the sheet: { "YYYY-MM-DD": steps }
+let DATA = {};
+let pendingUpdates = {};   // typed here, not yet written to the sheet
+let flushTimer = null;
+let syncing = false;
+let headerRows = 1;        // auto-detected: 1 if row 1 is a header, 0 if it's data
+let sheetRowCount = 0;     // data rows currently occupied in the sheet
+
+// Offline cache so the chart still shows numbers before sign-in completes
+const CACHE_KEY = 'punkpunksteps_sheetcache';
+function readCache() {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); } catch(e) { return {}; }
+}
+function writeCache(obj) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(obj)); } catch(e) {}
+}
+DATA = readCache();
+
+function setSteps(date, val) {
+  const k = toKey(date);
+  if (val === null || val === undefined || isNaN(val)) {
+    delete DATA[k];
+    pendingUpdates[k] = null;
+  } else {
+    DATA[k] = val;
+    pendingUpdates[k] = val;
+  }
+  writeCache(DATA);
+  scheduleFlush();
+}
+function getSteps(date) {
+  return DATA[toKey(date)] ?? null;
+}
+
+// ── Date parsing for whatever column A holds ──────────────────────────────────
+function pad2(n) { return String(n).length < 2 ? '0'+n : String(n); }
+function keyOfCell(v) {
+  const s = String(v == null ? '' : v).trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return m[1]+'-'+pad2(m[2])+'-'+pad2(m[3]);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);          // M/D/YYYY
+  if (m) return m[3]+'-'+pad2(m[1])+'-'+pad2(m[2]);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);          // M/D/YY
+  if (m) return '20'+m[3]+'-'+pad2(m[1])+'-'+pad2(m[2]);
+  return '';
+}
+
+// ── Sync status pill ──────────────────────────────────────────────────────────
+function setSyncState(state, text) {
+  const el = document.getElementById('syncBadge');
+  if (!el) return;
+  el.className = 'badge sync-badge ' + state;
+  el.textContent = text;
+}
+
+// ── Google sign-in (Google Identity Services) ─────────────────────────────────
+let tokenClient = null;
+let accessToken = null;
+let tokenResolve = null, tokenReject = null;
+
+function initGis() {
+  if (!CLIENT_ID || !SPREADSHEET_ID) {
+    showAuth(true);
+    showAuthNote('Add your Client ID and Spreadsheet ID to the top of this file.');
+    return;
+  }
+  if (location.protocol === 'file:') {
+    showAuth(true);
+    showAuthNote('Google sign-in needs https — open the GitHub Pages link, not the local file.');
+    return;
+  }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp && resp.access_token) {
+        accessToken = resp.access_token;
+        if (tokenResolve) tokenResolve(accessToken);
+      } else if (tokenReject) {
+        tokenReject(resp);
+      }
+      tokenResolve = tokenReject = null;
+    },
+    error_callback: (err) => {
+      if (tokenReject) tokenReject(err);
+      tokenResolve = tokenReject = null;
+    }
+  });
+  // Try to pick up an existing Google session without showing a popup
+  requestToken(true).then(onSignedIn).catch(() => {
+    setSyncState('off','Signed out');
+    showAuth(true);
+  });
+}
+
+function requestToken(silent) {
+  return new Promise((resolve, reject) => {
+    if (!tokenClient) return reject(new Error('not ready'));
+    tokenResolve = resolve; tokenReject = reject;
+    try {
+      tokenClient.requestAccessToken({ prompt: silent ? 'none' : '' });
+    } catch (e) { reject(e); }
+  });
+}
+
+function signIn() {
+  showAuthNote('');
+  requestToken(false).then(onSignedIn).catch(() => {
+    showAuthNote('Sign-in was cancelled or blocked. Allow popups and try again.');
+  });
+}
+
+async function onSignedIn() {
+  showAuth(false);
+  const ok = await pullFromSheet(false);
+  render(false);
+  if (!ok) showToast('Signed in, but the sheet did not load');
+}
+
+function showAuth(visible) {
+  const el = document.getElementById('authOverlay');
+  if (el) el.style.display = visible ? 'flex' : 'none';
+}
+function showAuthNote(msg) {
+  const el = document.getElementById('authNote');
+  if (el) el.textContent = msg;
+}
+
+// ── Sheets API helper ─────────────────────────────────────────────────────────
+async function sheetsFetch(path, opts) {
+  opts = Object.assign({}, opts);
+  opts.headers = Object.assign({}, opts.headers, { 'Authorization': 'Bearer ' + accessToken });
+  let res = await fetch(API + SPREADSHEET_ID + path, opts);
+  if (res.status === 401 || res.status === 403) {
+    // token aged out — grab a fresh one quietly and retry once
+    await requestToken(true);
+    opts.headers['Authorization'] = 'Bearer ' + accessToken;
+    res = await fetch(API + SPREADSHEET_ID + path, opts);
+  }
+  if (!res.ok) throw new Error('Sheets API ' + res.status);
+  return res.json();
+}
+const range = r => encodeURIComponent(SHEET_TAB + '!' + r);
+
+// ── Read the sheet ────────────────────────────────────────────────────────────
+async function pullFromSheet(silent) {
+  if (!accessToken) { setSyncState('off','Signed out'); return false; }
+  if (!silent) setSyncState('busy','Syncing…');
+  try {
+    const json = await sheetsFetch('/values/' + range('A:B'));
+    const rows = json.values || [];
+
+    // Row 1 is a header unless it parses as a date
+    headerRows = (rows.length && !keyOfCell(rows[0][0])) ? 1 : 0;
+
+    const next = {};
+    for (let i = headerRows; i < rows.length; i++) {
+      const k = keyOfCell(rows[i][0]);
+      if (!k) continue;
+      const raw = String(rows[i][1] == null ? '' : rows[i][1]).replace(/,/g,'').trim();
+      if (raw === '') continue;
+      const n = Number(raw);
+      if (!isNaN(n)) next[k] = n;
+    }
+    sheetRowCount = Math.max(0, rows.length - headerRows);
+
+    DATA = next;
+    // anything typed but not yet written still wins
+    Object.keys(pendingUpdates).forEach(k => {
+      if (pendingUpdates[k] === null) delete DATA[k]; else DATA[k] = pendingUpdates[k];
+    });
+    writeCache(DATA);
+    setSyncState('ok','Sheet synced');
+    return true;
+  } catch (e) {
+    setSyncState('err','Sync failed');
+    return false;
+  }
+}
+
+// ── Write the sheet ───────────────────────────────────────────────────────────
+function scheduleFlush() {
+  clearTimeout(flushTimer);
+  flushTimer = setTimeout(flushToSheet, 900);
+}
+
+async function writeAll() {
+  const keys = Object.keys(DATA).sort();
+  const values = keys.map(k => [k, DATA[k]]);
+  const start = headerRows + 1;
+
+  if (values.length) {
+    await sheetsFetch(
+      '/values/' + range('A'+start+':B'+(start+values.length-1)) + '?valueInputOption=USER_ENTERED',
+      { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ values }) }
+    );
+  }
+  // wipe any rows left over from deleted days
+  if (sheetRowCount > values.length) {
+    const from = start + values.length;
+    const to   = headerRows + sheetRowCount;
+    await sheetsFetch('/values/' + range('A'+from+':B'+to) + ':clear', { method:'POST' });
+  }
+  sheetRowCount = values.length;
+}
+
+async function flushToSheet() {
+  if (!accessToken) return;
+  if (syncing) { scheduleFlush(); return; }
+  const batch = pendingUpdates;
+  if (!Object.keys(batch).length) return;
+  pendingUpdates = {};
+  syncing = true;
+  setSyncState('busy','Saving…');
+  try {
+    // re-read first so edits made in the sheet aren't overwritten
+    await pullFromSheet(true);
+    const apply = o => Object.keys(o).forEach(k => {
+      if (o[k] === null) delete DATA[k]; else DATA[k] = o[k];
+    });
+    apply(batch);
+    apply(pendingUpdates);       // anything typed during the read
+    await writeAll();
+    writeCache(DATA);
+    setSyncState('ok','Sheet synced');
+  } catch (e) {
+    Object.keys(batch).forEach(k => { if (!(k in pendingUpdates)) pendingUpdates[k] = batch[k]; });
+    setSyncState('err','Sync failed');
+  } finally {
+    syncing = false;
+  }
+}
+
+// ── Auto-refresh: picks up edits made directly in the sheet ───────────────────
+function typing() {
+  const a = document.activeElement;
+  return a && a.classList && a.classList.contains('step-input');
+}
+async function refreshIfChanged() {
+  if (!accessToken || typing() || syncing || Object.keys(pendingUpdates).length) return;
+  const before = JSON.stringify(DATA);
+  const ok = await pullFromSheet(true);
+  if (ok && JSON.stringify(DATA) !== before) render(false);
+}
+setInterval(refreshIfChanged, 20000);
+window.addEventListener('focus', refreshIfChanged);
+
+// Birthday Easter egg: week of 9/22 (2026)
+const BDAY_WEEK_KEY = '2026-09-19'; // Saturday before 9/22
+
+let viewMode = 'weekly'; // 'weekly' | 'monthly'
+let currentWeekStart = new Date(seedWeekStart);
+let currentMonthDate = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+
+let animating = false;
+
+// ── View Toggle ───────────────────────────────────────────────────────────────
+function setView(mode) {
+  viewMode = mode;
+  document.getElementById('btnWeekly').classList.toggle('active', mode==='weekly');
+  document.getElementById('btnMonthly').classList.toggle('active', mode==='monthly');
+  render(true);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function changePeriod(dir) {
+  if (viewMode === 'weekly') {
+    currentWeekStart = addDays(currentWeekStart, dir * 7);
+  } else {
+    const m = currentMonthDate.getMonth() + dir;
+    currentMonthDate = new Date(currentMonthDate.getFullYear(), m, 1);
+  }
+  render(true);
+}
+
+// ── All-Time Total ────────────────────────────────────────────────────────────
+function getAllTimeTotal() {
+  return Object.values(DATA).reduce((s,v)=>s+(Number(v)||0), 0);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(doAnimate) {
+  if (viewMode === 'weekly') renderWeekly(doAnimate);
+  else renderMonthly(doAnimate);
+  document.getElementById('allTimeVal').textContent =
+    getAllTimeTotal() > 0 ? getAllTimeTotal().toLocaleString()+' Steps' : '— Steps';
+}
+
+function renderWeekly(doAnimate) {
+  const wKey = toKey(currentWeekStart);
+
+  // Build 7-day array Sat→Fri
+  const days = Array.from({length:7}, (_,i) => {
+    const date = addDays(currentWeekStart, i);
+    return {
+      date, key: toKey(date),
+      steps: getSteps(date),
+      isToday: toKey(date) === toKey(TODAY)
+    };
+  });
+
+  // Period label
+  const startFmt = formatShort(currentWeekStart);
+  const endDate = addDays(currentWeekStart, 6);
+  const endFmt = formatShort(endDate)+'/'+String(endDate.getFullYear()).slice(2);
+  const isCurrentWeek = wKey === seedKey;
+
+  // Birthday Easter egg
+  const isBday = wKey === BDAY_WEEK_KEY;
+
+  document.getElementById('periodSublabel').textContent = 'Week of';
+  const rangeEl = document.getElementById('periodRangeLabel');
+  if (isBday) {
+    rangeEl.innerHTML = `<span class="birthday-label">🎂 Happy 12th Birthday!!! 🎂</span>`;
+    launchConfetti();
+  } else {
+    rangeEl.innerHTML = startFmt+' – '+endFmt+(isCurrentWeek?'<span class="current-dot"></span>':'');
+  }
+
+  // Badge
+  const diffWeeks = Math.round((currentWeekStart - seedWeekStart) / (7*86400000));
+  document.getElementById('periodBadge').textContent = diffWeeks < 0 ? 'Past' : 'Week '+(diffWeeks+1);
+
+  // Totals
+  const total = days.reduce((s,d)=>s+(d.steps||0),0);
+  document.getElementById('periodTotalLabel').textContent = 'Week Total';
+  document.getElementById('periodTotalVal').textContent = total > 0 ? total.toLocaleString()+' Steps' : '— Steps';
+
+  // Chart
+  drawWeekChart(days, doAnimate);
+
+  // Inputs
+  document.getElementById('dayInputs').className = 'day-inputs';
+  document.getElementById('inputPanelTitle').textContent = 'Log Steps — '+startFmt+' to '+endFmt;
+  drawWeekInputs(days, wKey);
+}
+
+function renderMonthly(doAnimate) {
+  const year = currentMonthDate.getFullYear();
+  const month = currentMonthDate.getMonth();
+  const monthName = MONTH_NAMES[month]+' '+year;
+
+  document.getElementById('periodSublabel').textContent = 'Month of';
+  document.getElementById('periodRangeLabel').innerHTML = monthName;
+  document.getElementById('periodBadge').textContent = MONTH_NAMES[month];
+
+  // Build days from 1st to last of month
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month+1, 0);
+  const days = [];
+  for (let d = new Date(firstDay); d <= lastDay; d = addDays(d, 1)) {
+    days.push({ date: new Date(d), steps: getSteps(d), isToday: toKey(d) === toKey(TODAY) });
+  }
+
+  const total = days.reduce((s,d)=>s+(d.steps||0),0);
+  document.getElementById('periodTotalLabel').textContent = 'Month Total';
+  document.getElementById('periodTotalVal').textContent = total > 0 ? total.toLocaleString()+' Steps' : '— Steps';
+
+  drawMonthChart(days, doAnimate);
+
+  document.getElementById('dayInputs').className = 'month-inputs';
+  document.getElementById('inputPanelTitle').textContent = 'Log Steps — '+monthName;
+  drawMonthInputs(days, year, month);
+}
+
+// ── Week Chart ────────────────────────────────────────────────────────────────
+function drawWeekChart(days, doAnimate) {
+  const svg = document.getElementById('chart');
+  const W=560, H=200, padL=52, padR=14, padT=28, padB=36;
+  const cW=W-padL-padR, cH=H-padT-padB;
+
+  const allSteps = days.map(d=>d.steps).filter(s=>s!==null);
+  const maxSteps = allSteps.length ? Math.max(Math.max(...allSteps)*1.15, 5000) : 12000;
+  const xOf = i => padL + (i/6)*cW;
+  const yOf = v => padT + cH - (v/maxSteps)*cH;
+
+  const gridMax = Math.ceil(maxSteps/3000)*3000;
+  const gridVals = [0,gridMax/4,gridMax/2,gridMax*3/4,gridMax].map(Math.round);
+
+  let html = `<defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ff3333" stop-opacity="0.3"/>
+    <stop offset="100%" stop-color="#ff3333" stop-opacity="0"/>
+  </linearGradient></defs>`;
+
+  gridVals.forEach(v => {
+    const y = yOf(v);
+    html += `<line class="grid-line" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`;
+    const lbl = v>=1000 ? (v/1000).toFixed(v%1000===0?0:1)+'k' : v;
+    html += `<text class="axis-label" x="${padL-7}" y="${y+4}" text-anchor="end">${lbl}</text>`;
+  });
+
+  const withData = days.filter(d=>d.steps!==null);
+  let dotsHtml = '', labelsHtml = '', dotIdx = 0;
+
+  if (withData.length >= 2) {
+    const pts = withData.map(d=>`${xOf(days.indexOf(d))},${yOf(d.steps)}`);
+    const fi = days.indexOf(withData[0]), li = days.indexOf(withData[withData.length-1]);
+    html += `<path class="area" d="M${xOf(fi)},${yOf(0)} L${pts.join('L')} L${xOf(li)},${yOf(0)} Z"/>`;
+    html += `<path id="mainLine" class="line-path" d="M${pts.join('L')}"/>`;
+  }
+
+  days.forEach((d,i) => {
+    const x = xOf(i);
+    html += `<text class="x-label" x="${x}" y="${H-14}" text-anchor="middle">${DAY_SHORT[d.date.getDay()]}</text>`;
+    html += `<text class="x-label" style="font-size:8px;fill:#2a5a2a" x="${x}" y="${H-4}" text-anchor="middle">${formatShort(d.date)}</text>`;
+    if (d.steps !== null) {
+      const y = yOf(d.steps);
+      const dotDelay = 0.9 + dotIdx * 0.15;
+      const lblDelay = 1.0 + dotIdx * 0.15;
+      dotsHtml += `<circle class="dot" cx="${x}" cy="${y}" r="${d.isToday?7:5}"/>`;
+      if (d.isToday) dotsHtml += `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="#ff5555" stroke-width="1.5" opacity="0.5"/>`;
+      labelsHtml += `<text class="step-label" x="${x}" y="${y-12}" text-anchor="middle">${d.steps.toLocaleString()}</text>`;
+      dotIdx++;
+    }
+  });
+
+  // Labels render before dots so dots sit on top
+  html += labelsHtml + dotsHtml;
+
+  svg.innerHTML = html;
+
+  // Set real path length for smooth line draw
+  if (doAnimate) {
+    const lp = svg.querySelector('#mainLine');
+    if (lp) {
+      const len = lp.getTotalLength ? lp.getTotalLength() : 1000;
+      lp.style.strokeDasharray = len;
+      lp.style.strokeDashoffset = len;
+      lp.style.animation = 'drawLine 1.2s cubic-bezier(0.4,0,0.2,1) 0.2s forwards';
+    }
+  }
+}
+
+// ── Month Chart ───────────────────────────────────────────────────────────────
+function drawMonthChart(days, doAnimate) {
+  const svg = document.getElementById('chart');
+  const W=560, H=200, padL=52, padR=8, padT=28, padB=26;
+  const cW=W-padL-padR, cH=H-padT-padB;
+  const n = days.length;
+
+  const allSteps = days.map(d=>d.steps).filter(s=>s!==null);
+  const maxSteps = allSteps.length ? Math.max(Math.max(...allSteps)*1.15, 5000) : 12000;
+  const xOf = i => padL + (i/(n-1||1))*cW;
+  const yOf = v => padT + cH - (v/maxSteps)*cH;
+
+  const gridMax = Math.ceil(maxSteps/3000)*3000;
+  const gridVals = [0,gridMax/2,gridMax].map(Math.round);
+
+  let html = `<defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ff3333" stop-opacity="0.25"/>
+    <stop offset="100%" stop-color="#ff3333" stop-opacity="0"/>
+  </linearGradient></defs>`;
+
+  gridVals.forEach(v => {
+    const y = yOf(v);
+    html += `<line class="grid-line" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`;
+    const lbl = v>=1000 ? (v/1000).toFixed(v%1000===0?0:1)+'k' : v;
+    html += `<text class="axis-label" x="${padL-7}" y="${y+4}" text-anchor="end">${lbl}</text>`;
+  });
+
+  // X axis: show day numbers every 7
+  days.forEach((d,i) => {
+    if (d.date.getDate() === 1 || d.date.getDate() % 7 === 1) {
+      html += `<text class="x-label" style="font-size:8px" x="${xOf(i)}" y="${H-4}" text-anchor="middle">${d.date.getDate()}</text>`;
+    }
+  });
+
+  const withData = days.filter(d=>d.steps!==null);
+  if (withData.length >= 2) {
+    const pts = withData.map(d=>`${xOf(days.indexOf(d))},${yOf(d.steps)}`);
+    const fi = days.indexOf(withData[0]), li = days.indexOf(withData[withData.length-1]);
+    html += `<path class="area" d="M${xOf(fi)},${yOf(0)} L${pts.join('L')} L${xOf(li)},${yOf(0)} Z"/>`;
+    html += `<path class="line-path${doAnimate?' animating':''}" id="mainLine" d="M${pts.join('L')}"/>`;
+  }
+
+  days.forEach((d,i) => {
+    if (d.steps !== null) {
+      const x = xOf(i), y = yOf(d.steps);
+      html += `<circle class="dot" cx="${x}" cy="${y}" r="${d.isToday?4:3}"/>`;
+    }
+  });
+
+  svg.innerHTML = html;
+
+  if (doAnimate) {
+    const lp = svg.querySelector('#mainLine');
+    if (lp) {
+      const len = lp.getTotalLength ? lp.getTotalLength() : 2000;
+      lp.style.strokeDasharray = len;
+      lp.style.strokeDashoffset = len;
+    }
+  }
+}
+
+// ── Week Inputs ───────────────────────────────────────────────────────────────
+function drawWeekInputs(days) {
+  const container = document.getElementById('dayInputs');
+  container.innerHTML = '';
+  days.forEach(d => {
+    const wrap = document.createElement('div');
+    wrap.className = 'day-input-wrap';
+
+    const l1 = document.createElement('div'); l1.className='day-input-label';
+    l1.textContent = DAY_SHORT[d.date.getDay()];
+    const l2 = document.createElement('div'); l2.className='day-input-date';
+    l2.textContent = formatShort(d.date);
+
+    const inp = document.createElement('input');
+    inp.type='number'; inp.className='step-input';
+    inp.placeholder='—'; inp.min=0; inp.max=99999;
+    if (d.steps !== null) inp.value = d.steps;
+
+    inp.addEventListener('input', () => {
+      const v = parseInt(inp.value);
+      setSteps(d.date, isNaN(v) || inp.value==='' ? null : v);
+      refreshTotalsOnly(days.map(x=>({...x, steps: getSteps(x.date)})));
+    });
+
+    wrap.append(l1,l2,inp);
+    container.appendChild(wrap);
+  });
+}
+
+// ── Month Inputs ──────────────────────────────────────────────────────────────
+function drawMonthInputs(days, year, month) {
+  const container = document.getElementById('dayInputs');
+  container.innerHTML = '';
+
+  // Header row
+  const headers = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const firstDow = days[0].date.getDay();
+
+  // Blank cells before first day
+  for (let b=0; b < firstDow; b++) {
+    const blank = document.createElement('div'); blank.className='day-input-wrap';
+    container.appendChild(blank);
+  }
+
+  days.forEach(d => {
+    const wrap = document.createElement('div'); wrap.className='day-input-wrap';
+    const l1 = document.createElement('div'); l1.className='day-input-date';
+    l1.textContent = d.date.getDate();
+    const inp = document.createElement('input');
+    inp.type='number'; inp.className='step-input';
+    inp.placeholder='—'; inp.min=0; inp.max=99999;
+    if (d.steps !== null) inp.value = d.steps;
+    inp.addEventListener('input', () => {
+      const v = parseInt(inp.value);
+      setSteps(d.date, isNaN(v)||inp.value==='' ? null : v);
+      const allDays = days.map(x=>({...x, steps:getSteps(x.date)}));
+      const total = allDays.reduce((s,x)=>s+(x.steps||0),0);
+      document.getElementById('periodTotalVal').textContent = total>0?total.toLocaleString()+' Steps':'— Steps';
+      document.getElementById('allTimeVal').textContent = getAllTimeTotal()>0?getAllTimeTotal().toLocaleString()+' Steps':'— Steps';
+      drawMonthChart(allDays, false);
+    });
+    wrap.append(l1, inp);
+    container.appendChild(wrap);
+  });
+}
+
+// ── Live Refresh Totals ───────────────────────────────────────────────────────
+function refreshTotalsOnly(days) {
+  const total = days.reduce((s,d)=>s+(d.steps||0),0);
+  document.getElementById('periodTotalVal').textContent = total>0?total.toLocaleString()+' Steps':'— Steps';
+  document.getElementById('allTimeVal').textContent = getAllTimeTotal()>0?getAllTimeTotal().toLocaleString()+' Steps':'— Steps';
+  if (viewMode==='weekly') drawWeekChart(days, false);
+}
+
+// ── Replay Animation ──────────────────────────────────────────────────────────
+function replayAnimation() {
+  if (animating) return;
+  animating = true;
+  render(true);
+  setTimeout(() => { animating = false; }, 2000);
+}
+
+// ── Save / Toast ──────────────────────────────────────────────────────────────
+async function saveWeek() {
+  if (!accessToken) { showToast('Sign in with Google first'); showAuth(true); return; }
+  clearTimeout(flushTimer);
+  await flushToSheet();
+  const ok = await pullFromSheet(true);
+  render(false);
+  showToast(ok ? '✓ Saved to sheet' : 'Could not reach the sheet');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Birthday Confetti ─────────────────────────────────────────────────────────
+let confettiLaunched = false;
+function launchConfetti() {
+  if (confettiLaunched) return;
+  confettiLaunched = true;
+  const colors = ['#ff3333','#ffcc00','#33ff99','#3399ff','#ff66cc','#ff9933'];
+  for (let i=0; i<60; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random()*100+'vw';
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      el.style.width = (6+Math.random()*8)+'px';
+      el.style.height = (6+Math.random()*8)+'px';
+      el.style.borderRadius = Math.random()>0.5?'50%':'2px';
+      const dur = 2+Math.random()*2;
+      el.style.animationDuration = dur+'s';
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), dur*1000+100);
+    }, i*40);
+  }
+  setTimeout(()=>{ confettiLaunched=false; }, 3000);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+render(true);
+setSyncState('off','Signed out');
+window.__initGis = initGis;
+if (window.__gisReady) initGis();
+</script>
+</body>
+</html>

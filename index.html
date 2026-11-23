@@ -191,6 +191,11 @@
     text-shadow: 0 0 12px rgba(255,200,0,0.6);
     animation: bdayPulse 1s infinite;
   }
+  .choppas-label {
+    color: #ffcc00 !important;
+    text-shadow: 0 0 12px rgba(255,200,0,0.6), 0 0 22px rgba(30,90,255,0.7);
+    animation: bdayPulse 1s infinite;
+  }
   @keyframes bdayPulse {
     0%,100% { opacity: 1; }
     50% { opacity: 0.7; }
@@ -382,6 +387,13 @@
     animation: pulse 1.4s infinite;
   }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  /* .period-label span was forcing the dot to display:block, dropping it onto its own line */
+  .period-label .current-dot {
+    display: inline-block;
+    margin: 0 0 0 6px;
+    font-size: 0;
+    vertical-align: middle;
+  }
 
   /* month-view week dividers in input grid */
   .week-divider {
@@ -665,6 +677,21 @@ function setSyncState(state, text) {
 let tokenClient = null;
 let accessToken = null;
 let tokenResolve = null, tokenReject = null;
+const TOKEN_KEY = 'pps_token_v1';
+function loadCachedToken() {
+  try {
+    const t = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
+    if (t && t.token && t.exp > Date.now()) return t.token;
+  } catch (e) {}
+  return null;
+}
+function saveToken(token, expiresIn) {
+  try {
+    localStorage.setItem(TOKEN_KEY, JSON.stringify({
+      token, exp: Date.now() + ((Number(expiresIn) || 3600) - 120) * 1000
+    }));
+  } catch (e) {}
+}
 
 function initGis() {
   if (!CLIENT_ID || !SPREADSHEET_ID) {
@@ -683,6 +710,7 @@ function initGis() {
     callback: (resp) => {
       if (resp && resp.access_token) {
         accessToken = resp.access_token;
+        saveToken(accessToken, resp.expires_in);
         if (tokenResolve) tokenResolve(accessToken);
       } else if (tokenReject) {
         tokenReject(resp);
@@ -694,7 +722,14 @@ function initGis() {
       tokenResolve = tokenReject = null;
     }
   });
-  // Try to pick up an existing Google session without showing a popup
+  // Reuse a still-valid token from last time so the sign-in card never flashes up
+  const cached = loadCachedToken();
+  if (cached) {
+    accessToken = cached;
+    onSignedIn();
+    return;
+  }
+  // Otherwise try to pick up an existing Google session without showing a popup
   requestToken(true).then(onSignedIn).catch(() => {
     setSyncState('off','Signed out');
     showAuth(true);
@@ -940,6 +975,9 @@ window.addEventListener('focus', refreshIfChanged);
 
 // Birthday Easter egg: week of 9/22 (2026)
 const BDAY_WEEK_KEY = '2026-09-19'; // Saturday before 9/22
+// Choppas in the tummy: week of 11/23 (2026), week starts Saturday 11/21
+const CHOPPAS_WEEK_KEY = '2026-11-21';
+const CHOPPAS_DAY_KEY = '2026-11-23';
 
 let viewMode = 'weekly'; // 'weekly' | 'monthly'
 let currentWeekStart = new Date(seedWeekStart);
@@ -1000,12 +1038,17 @@ function renderWeekly(doAnimate) {
 
   // Birthday Easter egg
   const isBday = wKey === BDAY_WEEK_KEY;
+  // Only on the actual day (11/23/2026), while viewing that week. Add #choppas to the URL to preview.
+  const isChoppas = (toKey(TODAY) === CHOPPAS_DAY_KEY && isCurrentWeek) || (location.hash === '#choppas' && wKey === CHOPPAS_WEEK_KEY);
 
   document.getElementById('periodSublabel').textContent = 'Week of';
   const rangeEl = document.getElementById('periodRangeLabel');
   if (isBday) {
     rangeEl.innerHTML = `<span class="birthday-label">🎂 Happy 12th Birthday!!! 🎂</span>`;
     launchConfetti();
+  } else if (isChoppas) {
+    rangeEl.innerHTML = `<span class="choppas-label">CHOPPAS IN THE TUMMY</span>` + (isCurrentWeek?'<span class="current-dot"></span>':'');
+    launchConfetti(['#1e5bff','#3d7bff','#0a2a8f','#ffcc00','#ffd633','#e6b800']);
   } else {
     rangeEl.innerHTML = startFmt+' – '+endFmt+(isCurrentWeek?'<span class="current-dot"></span>':'');
   }
@@ -1342,10 +1385,10 @@ function showToast(msg) {
 
 // ── Birthday Confetti ─────────────────────────────────────────────────────────
 let confettiLaunched = false;
-function launchConfetti() {
+function launchConfetti(customColors) {
   if (confettiLaunched) return;
   confettiLaunched = true;
-  const colors = ['#ff3333','#ffcc00','#33ff99','#3399ff','#ff66cc','#ff9933'];
+  const colors = customColors || ['#ff3333','#ffcc00','#33ff99','#3399ff','#ff66cc','#ff9933'];
   for (let i=0; i<60; i++) {
     setTimeout(() => {
       const el = document.createElement('div');
